@@ -1,5 +1,10 @@
 package org.minecraft.itemchecker;
 
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -8,6 +13,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.minecraft.itemchecker.baseclasses.CheckList;
 import org.minecraft.itemchecker.baseclasses.YamlData;
 
 public final class ItemChecker extends JavaPlugin implements Listener {
@@ -41,34 +47,76 @@ public final class ItemChecker extends JavaPlugin implements Listener {
             Player p = (Player)sender;
             if (args.length == 0) {
                 p.sendMessage("§8--------------------§f[§6ItemChecker§f]§8--------------------");
-                p.sendMessage("-§bプラグイン説明");
-                p.sendMessage("&6このプラグインは条件に一致したアイテムを自動的に削除し、コマンドを実行するプラグインです");
-                p.sendMessage("-§bYamlファイルの形式");
-                p.sendMessage("[定義名]§7:");
-                p.sendMessage("  CheckNBT§7: §atest");
+                p.sendMessage("-§bプラグイン説明§f-");
+                p.sendMessage("§6このプラグインは条件に一致したアイテムを自動的に削除し、コマンドを実行するプラグインです");
+                p.sendMessage("-§bYamlファイルの形式§f-");
+                p.sendMessage("[名前]§7:");
+                p.sendMessage("  checknbt§7: §atest");
                 p.sendMessage("  └§6#NBTに含まれている文字列");
-                p.sendMessage("  ContainedText§7: §atestitem");
-                p.sendMessage("  └§6#アイテム名に含まれている文字列");
-                p.sendMessage("  ConsoleCommand§7: §a/kill %player%");
-                p.sendMessage("  └§6#上記を両方満たした場合に実行されるコマンド(%player%=所持者)");
-                p.sendMessage("-§b使用可能コマンド");
-                p.sendMessage(" §a/ic reload");
-                p.sendMessage(" └§6Yamlファイルのリロード");
-                p.sendMessage(" §a/ic show");
-                p.sendMessage(" └§6読み込まれているリストの表示");
+                p.sendMessage("    checklist§7:");
+                p.sendMessage("      [名前]§7:");
+                p.sendMessage("        containedtext§7: §atestitem");
+                p.sendMessage("        └§6#アイテム名に含まれている文字列");
+                p.sendMessage("        consolecommand§7: §a/kill %player%");
+                p.sendMessage("        └§6#上記を両方満たした場合に実行されるコマンド");
+                p.sendMessage("      [名前2]§7:");
+                p.sendMessage("        containedtext§7: §atestitem2");
+                p.sendMessage("        §7etc...");
+                p.sendMessage("-§b実行コマンドに使用可能な変数§f-");
+                p.sendMessage("§a%player%§7: §6アイテム所持者");
+                p.sendMessage("-§b使用可能コマンド§f-");
+                p.sendMessage("§a/ic reload");
+                p.sendMessage("└§6Yamlファイルのリロード");
+                p.sendMessage("§a/ic show");
+                p.sendMessage("└§6読み込まれているリストの表示");
             } else {
                 if (args[0].equalsIgnoreCase("reload")) {
                     icm.LoadFile();
                     p.sendMessage("[§6ItemChecker§f]§e リロード完了");
                     p.sendMessage("[§6ItemChecker§f]§b " + icm.list.size() + "§e個読み込まれました");
                 } else if(args[0].equalsIgnoreCase("show")) {
-                    p.sendMessage("[§6ItemChecker§f]§b " + icm.list.size() + "§e個読み込まれています");
-                    String nameList = new String();
-                    for(YamlData data: icm.list){
-                        nameList += data.name;
-                        nameList += ",";
+                    int count = 0;
+                    for (YamlData data:icm.list) {
+                        count += data.checkLists.size();
                     }
-                    p.sendMessage("§b" + nameList);
+                    p.sendMessage("[§6ItemChecker§f]§e 現在§b" + count + "§e個読み込まれています");
+//                    for(YamlData data: icm.list){
+//                        String nameList = new String();
+//                        nameList += "§b" + data.name + ": §a";
+//                        for(CheckList checkList: data.checkLists){
+//                            nameList += checkList.name + ",";
+//                        }
+//                        p.sendMessage(nameList.substring(0,nameList.length()-1));
+//                    }
+                    for(YamlData data: icm.list){
+                        TextComponent mainComponent = new TextComponent(data.name + ": ");
+                        mainComponent.setColor(ChatColor.AQUA);
+                        for(int i = 0;i<data.checkLists.size();i++){
+                            CheckList checkList = data.checkLists.get(i);
+                            TextComponent subComponent = new TextComponent(checkList.name);
+                            if(i < data.checkLists.size() - 1){
+                                subComponent.addExtra(", ");
+                            }
+                            subComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(ChatColor.AQUA + "NBTに" +
+                                    ChatColor.GOLD + data.checkNBT +
+                                    ChatColor.AQUA + "、アイテム名に" +
+                                    ChatColor.GOLD + checkList.containedText +
+                                    ChatColor.AQUA + "が含まれている場合、アイテムを消去し" +
+                                    ChatColor.GOLD + "/" + checkList.consoleCommand +
+                                    ChatColor.AQUA + "を実行します").create()));
+                            subComponent.setColor(ChatColor.GREEN);
+                            mainComponent.addExtra(subComponent);
+                        }
+                        p.spigot().sendMessage(mainComponent);
+                    }
+//                    TextComponent mainComponent = new TextComponent( "Here's a question: " );
+//                    mainComponent.setColor( ChatColor.GOLD );
+//                    TextComponent subComponent = new TextComponent( "Maybe u r noob?" );
+//                    subComponent.setColor( ChatColor.AQUA );
+//                    subComponent.setHoverEvent( new HoverEvent( HoverEvent.Action.SHOW_TEXT, new ComponentBuilder( "Click me!" ).create() ) );
+//                    mainComponent.addExtra( subComponent );
+//                    mainComponent.addExtra( " Does that answer your question?" );
+//                    p.spigot().sendMessage( mainComponent );
                 }
                 else{
                     p.sendMessage("[§6ItemChecker§f]§c 不明なコマンド");

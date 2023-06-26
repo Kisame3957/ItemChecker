@@ -6,8 +6,9 @@ import org.bukkit.Material;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.minecraft.itemchecker.baseclasses.CheckList;
 import org.minecraft.itemchecker.baseclasses.YamlData;
 
 import java.io.BufferedReader;
@@ -23,14 +24,19 @@ public class ItemCheckManager {
 
     }
     public void LoadFile(){
-        File userdata = new File(Bukkit.getServer().getPluginManager().getPlugin("ItemChecker").getDataFolder(), File.separator + "Settings");
+        File userdata = new File(Bukkit.getServer().getPluginManager().getPlugin("itemchecker").getDataFolder(), File.separator + "settings");
         try {
             File defaultFile = new File(userdata, File.separator + "#default.yml");
             YamlConfiguration defaultConfig = YamlConfiguration.loadConfiguration(defaultFile);
-            defaultConfig.createSection("Default");
-            defaultConfig.set("Default.CheckNBT", "test");
-            defaultConfig.set("Default.ContainedText", "testitem");
-            defaultConfig.set("Default.ConsoleCommand", "kill %player%");
+            defaultConfig.createSection("default");
+            defaultConfig.set("default.checknbt", "test");
+            defaultConfig.createSection("default.checklist");
+            defaultConfig.createSection("default.checklist.setting1");
+            defaultConfig.set("default.checklist.setting1.containedtext", "testitem");
+            defaultConfig.set("default.checklist.setting1.consolecommand", "kill %player%");
+            defaultConfig.createSection("default.checklist.setting2");
+            defaultConfig.set("default.checklist.setting2.containedtext", "testitem2");
+            defaultConfig.set("default.checklist.setting2.consolecommand", "give %player diamond");
             defaultConfig.save(defaultFile);
         }
         catch (Exception e){
@@ -44,12 +50,12 @@ public class ItemCheckManager {
                     FileConfiguration config;
                     config = YamlConfiguration.loadConfiguration(f);
                     for (String name: getFirstTag(f)) {
-                        list.add(new YamlData(
-                                name,
-                                config.getString(name + ".CheckNBT","null"),
-                                config.getString(name + ".ContainedText","null"),
-                                config.getString(name + ".ConsoleCommand","null")
-                        ));
+                        YamlData data = new YamlData(name,config.getString(name + ".checknbt","null"));
+                        config.getConfigurationSection(name + ".checklist").getKeys(false).forEach(key -> {
+                            data.checkLists.add(new CheckList(key, config.getString(name + ".checklist." + key + ".containedtext","null"),
+                                    config.getString(name + ".checklist." + key + ".consolecommand","null")));
+                        });
+                        list.add(data);
                     }
                 }
             }
@@ -75,11 +81,17 @@ public class ItemCheckManager {
                 String nbtStr = nbtItem.toString();
                 YamlData data = ContainsNBT(nbtStr);
                 if(data != null) {
-                    if (itemName.equalsIgnoreCase(data.containedText)) {
+                    int index = data.CheckContainedText(itemName);
+                    if(index != -1){
                         p.getInventory().setItem(slot, new ItemStack(Material.AIR));
                         ConsoleCommandSender console = Bukkit.getServer().getConsoleSender();
-                        Bukkit.dispatchCommand(console, data.getCommand(p));
+                        Bukkit.dispatchCommand(console, data.getCommand(p,index));
                     }
+//                    if (itemName.equalsIgnoreCase(data.containedText)) {
+//                        p.getInventory().setItem(slot, new ItemStack(Material.AIR));
+//                        ConsoleCommandSender console = Bukkit.getServer().getConsoleSender();
+//                        Bukkit.dispatchCommand(console, data.getCommand(p));
+//                    }
                 }
             }
         }
