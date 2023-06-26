@@ -87,11 +87,6 @@ public class ItemCheckManager {
                         ConsoleCommandSender console = Bukkit.getServer().getConsoleSender();
                         Bukkit.dispatchCommand(console, data.getCommand(p,index));
                     }
-//                    if (itemName.equalsIgnoreCase(data.containedText)) {
-//                        p.getInventory().setItem(slot, new ItemStack(Material.AIR));
-//                        ConsoleCommandSender console = Bukkit.getServer().getConsoleSender();
-//                        Bukkit.dispatchCommand(console, data.getCommand(p));
-//                    }
                 }
             }
         }

@@ -22,7 +22,6 @@ public final class ItemChecker extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         // Plugin startup logic
-        //getCommand("itemchecker").setExecutor(new CommandClass());
         icm.LoadFile();
         getServer().getPluginManager().registerEvents(this, this);
     }
@@ -80,14 +79,6 @@ public final class ItemChecker extends JavaPlugin implements Listener {
                         count += data.checkLists.size();
                     }
                     p.sendMessage("[§6ItemChecker§f]§e 現在§b" + count + "§e個読み込まれています");
-//                    for(YamlData data: icm.list){
-//                        String nameList = new String();
-//                        nameList += "§b" + data.name + ": §a";
-//                        for(CheckList checkList: data.checkLists){
-//                            nameList += checkList.name + ",";
-//                        }
-//                        p.sendMessage(nameList.substring(0,nameList.length()-1));
-//                    }
                     for(YamlData data: icm.list){
                         TextComponent mainComponent = new TextComponent(data.name + ": ");
                         mainComponent.setColor(ChatColor.AQUA);
@@ -109,14 +100,6 @@ public final class ItemChecker extends JavaPlugin implements Listener {
                         }
                         p.spigot().sendMessage(mainComponent);
                     }
-//                    TextComponent mainComponent = new TextComponent( "Here's a question: " );
-//                    mainComponent.setColor( ChatColor.GOLD );
-//                    TextComponent subComponent = new TextComponent( "Maybe u r noob?" );
-//                    subComponent.setColor( ChatColor.AQUA );
-//                    subComponent.setHoverEvent( new HoverEvent( HoverEvent.Action.SHOW_TEXT, new ComponentBuilder( "Click me!" ).create() ) );
-//                    mainComponent.addExtra( subComponent );
-//                    mainComponent.addExtra( " Does that answer your question?" );
-//                    p.spigot().sendMessage( mainComponent );
                 }
                 else{
                     p.sendMessage("[§6ItemChecker§f]§c 不明なコマンド");
