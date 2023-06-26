@@ -36,6 +36,7 @@ public class ItemCheckManager {
             defaultConfig.set("default.checklist.setting1.consolecommand", "kill %player%");
             defaultConfig.createSection("default.checklist.setting2");
             defaultConfig.set("default.checklist.setting2.containedtext", "testitem2");
+            defaultConfig.set("default.checklist.setting2.useregular", true);
             defaultConfig.set("default.checklist.setting2.consolecommand", "give %player diamond");
             defaultConfig.save(defaultFile);
         }
@@ -50,10 +51,14 @@ public class ItemCheckManager {
                     FileConfiguration config;
                     config = YamlConfiguration.loadConfiguration(f);
                     for (String name: getFirstTag(f)) {
-                        YamlData data = new YamlData(name,config.getString(name + ".checknbt","null"));
+                        YamlData data = new YamlData(name,
+                                config.getBoolean(name + ".useregularnbt",false),
+                                config.getString(name + ".checknbt",null));
                         config.getConfigurationSection(name + ".checklist").getKeys(false).forEach(key -> {
-                            data.checkLists.add(new CheckList(key, config.getString(name + ".checklist." + key + ".containedtext","null"),
-                                    config.getString(name + ".checklist." + key + ".consolecommand","null")));
+                            data.checkLists.add(new CheckList(key,
+                                    config.getBoolean(name + ".checklist." + key + ".useregular",false),
+                                    config.getString(name + ".checklist." + key + ".containedtext",null),
+                                    config.getString(name + ".checklist." + key + ".consolecommand",null)));
                         });
                         list.add(data);
                     }
@@ -66,8 +71,16 @@ public class ItemCheckManager {
 
     public YamlData ContainsNBT(String str){
         for (YamlData data: list) {
-            if(str.contains(data.checkNBT)){
-                return data;
+            if(data.checkNBT != null) {
+                if (data.useRegularNBT == false) {
+                    if (str.contains(data.checkNBT)) {
+                        return data;
+                    }
+                } else {
+                    if (str.matches(data.checkNBT)) {
+                        return data;
+                    }
+                }
             }
         }
         return null;
@@ -84,8 +97,11 @@ public class ItemCheckManager {
                     int index = data.CheckContainedText(itemName);
                     if(index != -1){
                         p.getInventory().setItem(slot, new ItemStack(Material.AIR));
-                        ConsoleCommandSender console = Bukkit.getServer().getConsoleSender();
-                        Bukkit.dispatchCommand(console, data.getCommand(p,index));
+                        String command = data.getCommand(p,index);
+                        if(command != null) {
+                            ConsoleCommandSender console = Bukkit.getServer().getConsoleSender();
+                            Bukkit.dispatchCommand(console, command);
+                        }
                     }
                 }
             }

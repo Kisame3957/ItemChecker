@@ -52,10 +52,15 @@ public final class ItemChecker extends JavaPlugin implements Listener {
                 p.sendMessage("[名前]§7:");
                 p.sendMessage("  checknbt§7: §atest");
                 p.sendMessage("  └§6#NBTに含まれている文字列");
+                p.sendMessage("  useregularnbt§7: §atrue");
+                p.sendMessage("  └§6#NBT判別に正規表現を使用するか否か(必須ではない)");
                 p.sendMessage("    checklist§7:");
                 p.sendMessage("      [名前]§7:");
                 p.sendMessage("        containedtext§7: §atestitem");
-                p.sendMessage("        └§6#アイテム名に含まれている文字列");
+                p.sendMessage("        ├§6#アイテム名に含まれている文字列(無い場合NBTのみで実行)");
+                p.sendMessage("        └§6#containedtextが複数無い場合は一つだけ実行されます");
+                p.sendMessage("        useregular§7: §atrue");
+                p.sendMessage("        └§6#アイテム名判別に正規表現を使用するか否か(必須ではない)");
                 p.sendMessage("        consolecommand§7: §a/kill %player%");
                 p.sendMessage("        └§6#上記を両方満たした場合に実行されるコマンド");
                 p.sendMessage("      [名前2]§7:");
