@@ -1,0 +1,12 @@
+name: ItemChecker
+version: '${project.version}'
+main: org.minecraft.itemchecker.ItemChecker
+api-version: '1.19'
+commands:
+  itemchecker:
+    aliases: ic
+    description: Command description
+    permission: itemchecker.command
+    permission-message: Permission denied
+    usage: Command usage
+
