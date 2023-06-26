@@ -56,7 +56,7 @@ public class ItemCheckManager {
                                 config.getString(name + ".checknbt",null));
                         config.getConfigurationSection(name + ".checklist").getKeys(false).forEach(key -> {
                             data.checkLists.add(new CheckList(key,
-                                    config.getBoolean(name + ".checklist." + key + ".useregular",false),
+                                    config.getBoolean(name + ".checklist." + key + ".useregulartext",false),
                                     config.getString(name + ".checklist." + key + ".containedtext",null),
                                     config.getString(name + ".checklist." + key + ".consolecommand",null)));
                         });
