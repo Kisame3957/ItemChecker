@@ -66,6 +66,7 @@ public final class ItemChecker extends JavaPlugin implements Listener {
                 p.sendMessage("      [名前2]§7:");
                 p.sendMessage("        containedtext§7: §atestitem2");
                 p.sendMessage("        §7etc...");
+                p.sendMessage("§c※出来る限り文字列は\"で囲んでください");
                 p.sendMessage("-§b実行コマンドに使用可能な変数§f-");
                 p.sendMessage("§a%player%§7: §6アイテム所持者");
                 p.sendMessage("-§b使用可能コマンド§f-");
@@ -93,10 +94,10 @@ public final class ItemChecker extends JavaPlugin implements Listener {
                             if(i < data.checkLists.size() - 1){
                                 subComponent.addExtra(", ");
                             }
-                            subComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(ChatColor.AQUA + "NBTに" +
+                            subComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(ChatColor.AQUA + "NBTに" + (data.useRegularNBT?"正規表現で":"") +
                                     ChatColor.GOLD + data.checkNBT +
-                                    ChatColor.AQUA + "、アイテム名に" +
-                                    ChatColor.GOLD + checkList.containedText +
+                                    (checkList.containedText!=null?(ChatColor.AQUA + "、アイテム名に" + (checkList.useRegularText?"正規表現で":"") +
+                                    ChatColor.GOLD + checkList.containedText):"") +
                                     ChatColor.AQUA + "が含まれている場合、アイテムを消去し" +
                                     ChatColor.GOLD + "/" + checkList.consoleCommand +
                                     ChatColor.AQUA + "を実行します").create()));
