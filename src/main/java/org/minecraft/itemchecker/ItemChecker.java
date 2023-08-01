@@ -1,19 +1,24 @@
 package org.minecraft.itemchecker;
 
+import de.tr7zw.nbtapi.NBTItem;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.block.Chest;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.minecraft.itemchecker.baseclasses.CheckList;
+import org.minecraft.itemchecker.baseclasses.CheckListItem;
 import org.minecraft.itemchecker.baseclasses.YamlData;
 
 public final class ItemChecker extends JavaPlugin implements Listener {
@@ -35,9 +40,54 @@ public final class ItemChecker extends JavaPlugin implements Listener {
     public void onHold(PlayerItemHeldEvent e){
         ItemStack stack = e.getPlayer().getInventory().getItem(e.getNewSlot());
         if(stack != null) {
-            Player player = e.getPlayer();
-            icm.CheckItem(player, stack, e.getNewSlot());
+            Player p = e.getPlayer();
+            NBTItem nbtItem = new NBTItem(stack);
+            //p.sendMessage(nbtItem.toString());
+            CheckListItem checkListItem = icm.CheckItem(stack);
+            if(checkListItem != null && nbtItem.getString("ItemChecker") != "NoReplace"){
+                p.getInventory().setItem(e.getNewSlot(), new ItemStack(Material.AIR));
+                //p.sendMessage(String.valueOf(stack.getAmount()));
+                String command = checkListItem.consoleCommand;
+                command = command.replace("%player%",p.getName());
+                command = command.replace("%amount%",String.valueOf(stack.getAmount()));
+                //p.sendMessage("RunCommand: " + command);
+                if(command != null) {
+                    ConsoleCommandSender console = Bukkit.getServer().getConsoleSender();
+                    Bukkit.dispatchCommand(console, command);
+                }
+            }
         }
+    }
+
+    @EventHandler
+    public void onSwapChestItem(InventoryClickEvent e){
+        try {
+            Chest c = (Chest) e.getView().getTopInventory().getHolder();
+            if(c.getCustomName() != null) {
+                if(c.getCustomName().equals(icm.DisableChestName)) {
+                    ItemStack item = e.getCurrentItem();
+                    NBTItem nbtItem = new NBTItem(item);
+                    if (icm.CheckItem(item) != null && nbtItem.getString("ItemChecker") != "NoReplace") {
+                        Player p = (Player) e.getWhoClicked();
+                        nbtItem.setString("ItemChecker", "NoReplace");
+                        c.getInventory().setItem(c.getInventory().first(item), nbtItem.getItem());
+                        p.sendMessage("[§6ItemChecker§f]§e自動置換対象の[§r" + item.getItemMeta().getDisplayName() + "§e]は自動置換対象から除外されました");
+                    }
+                }
+            }
+        }
+        catch (Exception ex){
+
+        }
+//        Player p = (Player)e.getSource().getHolder();
+//        ItemStack stack = e.getItem();
+//        p.sendMessage("des" + e.getDestination());
+//        p.sendMessage("sor" + e.getSource());
+//        if(stack != null && e.getDestination().getType() == InventoryType.CHEST) {
+//            CheckList checkList = icm.CheckItem(stack);
+//            if(checkList != null){
+//            }
+//        }
     }
 
     @Override
@@ -79,33 +129,34 @@ public final class ItemChecker extends JavaPlugin implements Listener {
                     icm.LoadFile();
                     p.sendMessage("[§6ItemChecker§f]§e リロード完了");
                     p.sendMessage("[§6ItemChecker§f]§b " + icm.list.size() + "§e個読み込まれました");
-                } else if(args[0].equalsIgnoreCase("show")) {
+                } else if(args[0].equalsIgnoreCase("list")) {
                     int count = 0;
                     for (YamlData data:icm.list) {
-                        count += data.checkLists.size();
+                        count += data.checkListItems.size();
                     }
                     p.sendMessage("[§6ItemChecker§f]§e 現在§b" + count + "§e個読み込まれています");
                     for(YamlData data: icm.list){
                         TextComponent mainComponent = new TextComponent(data.name + ": ");
                         mainComponent.setColor(ChatColor.AQUA);
-                        for(int i = 0;i<data.checkLists.size();i++){
-                            CheckList checkList = data.checkLists.get(i);
-                            TextComponent subComponent = new TextComponent(checkList.name);
-                            if(i < data.checkLists.size() - 1){
+                        for(int i = 0; i<data.checkListItems.size(); i++){
+                            CheckListItem checkListItem = data.checkListItems.get(i);
+                            TextComponent subComponent = new TextComponent(checkListItem.name);
+                            if(i < data.checkListItems.size() - 1){
                                 subComponent.addExtra(", ");
                             }
                             subComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(ChatColor.AQUA + "NBTに" + (data.useRegularNBT?"正規表現で":"") +
                                     ChatColor.GOLD + data.checkNBT +
-                                    (checkList.containedText!=null?(ChatColor.AQUA + "、アイテム名に" + (checkList.useRegularText?"正規表現で":"") +
-                                    ChatColor.GOLD + checkList.containedText):"") +
+                                    (checkListItem.containedText!=null?(ChatColor.AQUA + "、アイテム名に" + (checkListItem.useRegularText?"正規表現で":"") +
+                                    ChatColor.GOLD + checkListItem.containedText):"") +
                                     ChatColor.AQUA + "が含まれている場合、アイテムを消去し" +
-                                    ChatColor.GOLD + "/" + checkList.consoleCommand +
+                                    ChatColor.GOLD + "/" + checkListItem.consoleCommand +
                                     ChatColor.AQUA + "を実行します").create()));
                             subComponent.setColor(ChatColor.GREEN);
                             mainComponent.addExtra(subComponent);
                         }
                         p.spigot().sendMessage(mainComponent);
                     }
+                    p.sendMessage("§b自動置き換え除外チェスト名: §a" + String.valueOf(icm.DisableChestName));
                 }
                 else{
                     p.sendMessage("[§6ItemChecker§f]§c 不明なコマンド");

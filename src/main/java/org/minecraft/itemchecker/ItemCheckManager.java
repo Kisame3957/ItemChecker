@@ -2,13 +2,10 @@ package org.minecraft.itemchecker;
 
 import de.tr7zw.nbtapi.NBTItem;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.minecraft.itemchecker.baseclasses.CheckList;
+import org.minecraft.itemchecker.baseclasses.CheckListItem;
 import org.minecraft.itemchecker.baseclasses.YamlData;
 
 import java.io.BufferedReader;
@@ -20,6 +17,8 @@ import java.util.List;
 public class ItemCheckManager {
 
     public List<YamlData> list = new ArrayList<>();
+
+    public String DisableChestName = "";
     public ItemCheckManager(){
 
     }
@@ -55,7 +54,7 @@ public class ItemCheckManager {
                                 config.getBoolean(name + ".useregularnbt",false),
                                 config.getString(name + ".checknbt",null));
                         config.getConfigurationSection(name + ".checklist").getKeys(false).forEach(key -> {
-                            data.checkLists.add(new CheckList(key,
+                            data.checkListItems.add(new CheckListItem(key,
                                     config.getBoolean(name + ".checklist." + key + ".useregulartext",false),
                                     config.getString(name + ".checklist." + key + ".containedtext",null),
                                     config.getString(name + ".checklist." + key + ".consolecommand",null)));
@@ -64,6 +63,10 @@ public class ItemCheckManager {
                     }
                 }
             }
+            File configFile = new File(Bukkit.getServer().getPluginManager().getPlugin("itemchecker").getDataFolder(), File.separator + "config.yml");
+            FileConfiguration configData;
+            configData = YamlConfiguration.loadConfiguration(configFile);
+            DisableChestName = configData.getString("DisableChestName");
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -86,26 +89,29 @@ public class ItemCheckManager {
         return null;
     }
 
-    public void CheckItem(Player p, ItemStack stack, int slot){
+    public CheckListItem CheckItem(ItemStack stack){
         NBTItem nbtItem = new NBTItem(stack);
         if (stack != null && stack.getItemMeta() != null) {
             String itemName = stack.getItemMeta().getDisplayName();
+            //p.sendMessage("ItemName: " + itemName);
+            //p.sendMessage("ItemhasNBT: " + nbtItem.hasNBTData());
             if (nbtItem.hasNBTData() != false) {
                 String nbtStr = nbtItem.toString();
+                //p.sendMessage(nbtStr);
                 YamlData data = ContainsNBT(nbtStr);
+                //p.sendMessage("NBTCheckList:");
+                //for (YamlData yd:list) {
+                //    p.sendMessage(yd.checkNBT);
+                //}
+                //p.sendMessage("NBTCheckResult: " + data);
                 if(data != null) {
-                    int index = data.CheckContainedText(itemName);
-                    if(index != -1){
-                        p.getInventory().setItem(slot, new ItemStack(Material.AIR));
-                        String command = data.getCommand(p,index);
-                        if(command != null) {
-                            ConsoleCommandSender console = Bukkit.getServer().getConsoleSender();
-                            Bukkit.dispatchCommand(console, command);
-                        }
-                    }
+                    CheckListItem checkListItem = data.CheckContainedText(itemName);
+                    //p.sendMessage("NameCheckResult:" + checkList);
+                    return checkListItem;
                 }
             }
         }
+        return null;
     }
 
     private List<String> getFirstTag(File yamlFile){
