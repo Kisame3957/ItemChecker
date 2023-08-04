@@ -17,9 +17,4 @@ public class CheckListItem {
         containedText = ContainedText;
         consoleCommand = ConsoleCommand;
     }
-
-    public String getCommand(Player p, ItemStack i){
-        if(consoleCommand == null) return null;
-        return consoleCommand;
-    }
 }

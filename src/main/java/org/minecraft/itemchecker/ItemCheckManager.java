@@ -19,6 +19,7 @@ public class ItemCheckManager {
     public List<YamlData> list = new ArrayList<>();
 
     public String DisableChestName = "";
+    public String EnableChestName = "";
     public ItemCheckManager(){
 
     }
@@ -64,9 +65,13 @@ public class ItemCheckManager {
                 }
             }
             File configFile = new File(Bukkit.getServer().getPluginManager().getPlugin("itemchecker").getDataFolder(), File.separator + "config.yml");
+            if(!configFile.exists()){
+                configFile.createNewFile();
+            }
             FileConfiguration configData;
             configData = YamlConfiguration.loadConfiguration(configFile);
             DisableChestName = configData.getString("DisableChestName");
+            EnableChestName = configData.getString("EnableChestName");
         }catch (Exception e){
             e.printStackTrace();
         }

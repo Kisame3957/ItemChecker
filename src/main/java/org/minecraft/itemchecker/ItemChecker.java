@@ -15,7 +15,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerItemHeldEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.minecraft.itemchecker.baseclasses.CheckListItem;
@@ -42,9 +44,10 @@ public final class ItemChecker extends JavaPlugin implements Listener {
         if(stack != null) {
             Player p = e.getPlayer();
             NBTItem nbtItem = new NBTItem(stack);
-            //p.sendMessage(nbtItem.toString());
+            p.sendMessage(nbtItem.toString());
+            //p.sendMessage(String.valueOf(nbtItem.getString("ItemChecker").equals("NoReplace")));
             CheckListItem checkListItem = icm.CheckItem(stack);
-            if(checkListItem != null && nbtItem.getString("ItemChecker") != "NoReplace"){
+            if(checkListItem != null && !nbtItem.getString("ItemChecker").equals("NoReplace")){
                 p.getInventory().setItem(e.getNewSlot(), new ItemStack(Material.AIR));
                 //p.sendMessage(String.valueOf(stack.getAmount()));
                 String command = checkListItem.consoleCommand;
@@ -61,33 +64,37 @@ public final class ItemChecker extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onSwapChestItem(InventoryClickEvent e){
-        try {
+        ItemStack item = null;
+        if(e.getCurrentItem() != null && e.getCurrentItem().getType() != Material.AIR && e.getCurrentItem().getAmount() != 0 &&
+                e.getClickedInventory().getType() == InventoryType.PLAYER && e.isShiftClick()){
+            item = e.getCurrentItem();
+        }
+        else if(e.getCursor() != null && e.getCursor().getType() != Material.AIR && e.getCursor().getAmount() != 0 &&
+                e.getClickedInventory().getType() == InventoryType.CHEST){
+            item = e.getCursor();
+        }
+        if(item != null) {
             Chest c = (Chest) e.getView().getTopInventory().getHolder();
-            if(c.getCustomName() != null) {
-                if(c.getCustomName().equals(icm.DisableChestName)) {
-                    ItemStack item = e.getCurrentItem();
+            if (c.getCustomName() != null) {
+                if (c.getCustomName().equals(icm.DisableChestName)) {
                     NBTItem nbtItem = new NBTItem(item);
-                    if (icm.CheckItem(item) != null && nbtItem.getString("ItemChecker") != "NoReplace") {
+                    if (icm.CheckItem(item) != null && !nbtItem.getString("ItemChecker").equals("NoReplace")) {
                         Player p = (Player) e.getWhoClicked();
                         nbtItem.setString("ItemChecker", "NoReplace");
-                        c.getInventory().setItem(c.getInventory().first(item), nbtItem.getItem());
+                        item.setItemMeta(nbtItem.getItem().getItemMeta());
                         p.sendMessage("[§6ItemChecker§f]§e自動置換対象の[§r" + item.getItemMeta().getDisplayName() + "§e]は自動置換対象から除外されました");
+                    }
+                } else if (c.getCustomName().equals(icm.EnableChestName)) {
+                    NBTItem nbtItem = new NBTItem(item);
+                    Player p = (Player) e.getWhoClicked();
+                    if (icm.CheckItem(item) != null && nbtItem.getString("ItemChecker").equals("NoReplace")) {
+                        nbtItem.removeKey("ItemChecker");
+                        item.setItemMeta(nbtItem.getItem().getItemMeta());
+                        p.sendMessage("[§6ItemChecker§f]§e[§r" + item.getItemMeta().getDisplayName() + "§e]は自動置換対象に再設定されました");
                     }
                 }
             }
         }
-        catch (Exception ex){
-
-        }
-//        Player p = (Player)e.getSource().getHolder();
-//        ItemStack stack = e.getItem();
-//        p.sendMessage("des" + e.getDestination());
-//        p.sendMessage("sor" + e.getSource());
-//        if(stack != null && e.getDestination().getType() == InventoryType.CHEST) {
-//            CheckList checkList = icm.CheckItem(stack);
-//            if(checkList != null){
-//            }
-//        }
     }
 
     @Override
@@ -157,6 +164,7 @@ public final class ItemChecker extends JavaPlugin implements Listener {
                         p.spigot().sendMessage(mainComponent);
                     }
                     p.sendMessage("§b自動置き換え除外チェスト名: §a" + String.valueOf(icm.DisableChestName));
+                    p.sendMessage("§b自動置き換え再設定チェスト名: §a" + String.valueOf(icm.EnableChestName));
                 }
                 else{
                     p.sendMessage("[§6ItemChecker§f]§c 不明なコマンド");
